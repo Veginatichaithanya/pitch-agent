@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const PROCESS_DOC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-document`;
 
 interface ChatMainProps {
   conversationId: string | null;
@@ -21,6 +22,13 @@ interface Message {
   is_search?: boolean;
 }
 
+interface UploadedFile {
+  name: string;
+  path: string;
+  extractedText?: string;
+  processing?: boolean;
+}
+
 const ChatMain = ({
   conversationId,
   onConversationCreated,
@@ -32,8 +40,12 @@ const ChatMain = ({
   const [pitchMode, setPitchMode] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -56,9 +68,131 @@ const ChatMain = ({
     if (data) setMessages(data);
   };
 
+  // ── File Upload ──
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Error", description: "Please sign in to upload files.", variant: "destructive" });
+      return;
+    }
+
+    for (const file of Array.from(files)) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ title: "File too large", description: `${file.name} exceeds 20MB limit.`, variant: "destructive" });
+        continue;
+      }
+
+      const filePath = `${user.id}/${Date.now()}-${file.name}`;
+      const newFile: UploadedFile = { name: file.name, path: filePath, processing: true };
+      setUploadedFiles((prev) => [...prev, newFile]);
+
+      const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
+
+      if (uploadError) {
+        toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+        setUploadedFiles((prev) => prev.filter((f) => f.path !== filePath));
+        continue;
+      }
+
+      // Process document to extract text
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(PROCESS_DOC_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ filePath }),
+        });
+
+        if (resp.ok) {
+          const { text } = await resp.json();
+          setUploadedFiles((prev) =>
+            prev.map((f) => (f.path === filePath ? { ...f, extractedText: text, processing: false } : f))
+          );
+        } else {
+          setUploadedFiles((prev) =>
+            prev.map((f) => (f.path === filePath ? { ...f, processing: false } : f))
+          );
+        }
+      } catch {
+        setUploadedFiles((prev) =>
+          prev.map((f) => (f.path === filePath ? { ...f, processing: false } : f))
+        );
+      }
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (path: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.path !== path));
+  };
+
+  // ── Voice Input ──
+  const toggleVoice = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: "Not supported", description: "Speech recognition is not supported in this browser.", variant: "destructive" });
+      return;
+    }
+
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interim = transcript;
+        }
+      }
+      setInput((prev) => {
+        const base = prev.replace(/\s*\[listening...\]$/, "");
+        return (finalTranscript + interim).trim() || base;
+      });
+    };
+
+    recognition.onerror = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  }, [isRecording]);
+
+  // ── Send Message ──
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if ((!text && uploadedFiles.length === 0) || loading) return;
+
+    // Stop recording if active
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
 
     setInput("");
     setLoading(true);
@@ -69,7 +203,7 @@ const ChatMain = ({
       if (!convId) {
         const { data: conv } = await supabase
           .from("conversations")
-          .insert({ title: text.slice(0, 50) })
+          .insert({ title: text.slice(0, 50) || "Document analysis" })
           .select("id")
           .single();
         if (conv) {
@@ -80,13 +214,26 @@ const ChatMain = ({
 
       if (!convId) return;
 
-      // Save user message to DB
+      // Build the full message content including document context
+      let fullContent = text;
+      const docContextParts: string[] = [];
+      for (const file of uploadedFiles) {
+        if (file.extractedText) {
+          docContextParts.push(`[Document: ${file.name}]\n${file.extractedText}`);
+        }
+      }
+
+      if (docContextParts.length > 0) {
+        fullContent = `${text}\n\n--- Attached Documents ---\n${docContextParts.join("\n\n")}`;
+      }
+
+      // Save user message (display text only, not document content)
       const { data: userMsg } = await supabase
         .from("chat_messages")
         .insert({
           conversation_id: convId,
           role: "user",
-          content: text,
+          content: text || `[Uploaded: ${uploadedFiles.map((f) => f.name).join(", ")}]`,
           is_pitch: pitchMode,
           is_search: webSearch,
         })
@@ -97,11 +244,12 @@ const ChatMain = ({
         setMessages((prev) => [...prev, userMsg]);
       }
 
-      // Build messages for AI (only role + content)
-      const aiMessages = [...messages, { role: "user", content: text }].map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+      // Clear uploaded files
+      setUploadedFiles([]);
+
+      // Build messages for AI
+      const previousMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+      const aiMessages = [...previousMessages, { role: "user", content: fullContent }];
 
       // Stream AI response
       const { data: { session } } = await supabase.auth.getSession();
@@ -117,18 +265,13 @@ const ChatMain = ({
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        toast({
-          title: "Error",
-          description: errorData.error || "Failed to get AI response",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: errorData.error || "Failed to get AI response", variant: "destructive" });
         setLoading(false);
         return;
       }
 
       if (!resp.body) throw new Error("No response body");
 
-      // Stream tokens
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
@@ -136,7 +279,6 @@ const ChatMain = ({
       let streamDone = false;
       const tempId = `temp-${Date.now()}`;
 
-      // Add placeholder assistant message
       setMessages((prev) => [...prev, { id: tempId, role: "assistant", content: "" }]);
 
       while (!streamDone) {
@@ -148,25 +290,17 @@ const ChatMain = ({
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
           let line = textBuffer.slice(0, newlineIndex);
           textBuffer = textBuffer.slice(newlineIndex + 1);
-
           if (line.endsWith("\r")) line = line.slice(0, -1);
           if (line.startsWith(":") || line.trim() === "") continue;
           if (!line.startsWith("data: ")) continue;
-
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
-
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
-              setMessages((prev) =>
-                prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m))
-              );
+              setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m)));
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -175,7 +309,7 @@ const ChatMain = ({
         }
       }
 
-      // Flush remaining buffer
+      // Flush remaining
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -189,15 +323,13 @@ const ChatMain = ({
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
-              setMessages((prev) =>
-                prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m))
-              );
+              setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m)));
             }
           } catch { /* ignore */ }
         }
       }
 
-      // Save assistant message to DB
+      // Save to DB
       if (assistantContent) {
         const { data: savedAi } = await supabase
           .from("chat_messages")
@@ -210,20 +342,13 @@ const ChatMain = ({
           })
           .select()
           .single();
-
         if (savedAi) {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === tempId ? savedAi : m))
-          );
+          setMessages((prev) => prev.map((m) => (m.id === tempId ? savedAi : m)));
         }
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -236,7 +361,6 @@ const ChatMain = ({
     }
   };
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -248,21 +372,12 @@ const ChatMain = ({
     <div className="flex-1 flex flex-col h-full bg-[hsl(220,20%,97%)] relative">
       {/* Top bar */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[hsl(220,15%,90%)]">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-lg hover:bg-[hsl(220,15%,92%)] text-[hsl(220,10%,40%)] transition-colors"
-        >
-          {sidebarOpen ? (
-            <PanelLeftClose className="w-5 h-5" />
-          ) : (
-            <PanelLeftOpen className="w-5 h-5" />
-          )}
+        <button onClick={onToggleSidebar} className="p-2 rounded-lg hover:bg-[hsl(220,15%,92%)] text-[hsl(220,10%,40%)] transition-colors">
+          {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[hsl(250,70%,60%)]" />
-          <span className="font-display font-semibold text-[hsl(220,15%,20%)] text-sm">
-            Pitch Agent
-          </span>
+          <span className="font-display font-semibold text-[hsl(220,15%,20%)] text-sm">Pitch Agent</span>
         </div>
       </div>
 
@@ -274,19 +389,14 @@ const ChatMain = ({
               <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <h2 className="font-display text-2xl font-bold text-[hsl(220,15%,20%)] mb-2">
-                How can I help you today?
-              </h2>
+              <h2 className="font-display text-2xl font-bold text-[hsl(220,15%,20%)] mb-2">How can I help you today?</h2>
               <p className="text-[hsl(220,10%,50%)] text-sm max-w-md">
-                Enter your idea and I'll help you craft a compelling pitch. Toggle Pitch Mode for structured drafts.
+                Enter your idea, upload a document, or use voice input. Toggle <strong>Pitch Mode</strong> for structured drafts.
               </p>
             </div>
           ) : (
             messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+              <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
                   <div className="w-8 h-8 rounded-full gradient-btn flex items-center justify-center shrink-0 mt-1 shadow-md shadow-primary/20">
                     <Sparkles className="w-4 h-4 text-white" />
@@ -328,6 +438,24 @@ const ChatMain = ({
         </div>
       </div>
 
+      {/* Uploaded files preview */}
+      {uploadedFiles.length > 0 && (
+        <div className="px-4">
+          <div className="max-w-3xl mx-auto flex flex-wrap gap-2 pb-2">
+            {uploadedFiles.map((file) => (
+              <div key={file.path} className="flex items-center gap-2 bg-white border border-[hsl(220,15%,88%)] rounded-lg px-3 py-1.5 text-xs text-[hsl(220,15%,30%)]">
+                <File className="w-3.5 h-3.5 text-[hsl(250,70%,60%)]" />
+                <span className="truncate max-w-[150px]">{file.name}</span>
+                {file.processing && <span className="text-[hsl(220,10%,60%)] animate-pulse">processing...</span>}
+                <button onClick={() => removeFile(file.path)} className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,30%)]">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input area */}
       <div className="px-4 pb-4 pt-2">
         <div className="max-w-3xl mx-auto">
@@ -368,16 +496,27 @@ const ChatMain = ({
               </div>
 
               <div className="flex items-center gap-1">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)] transition-colors">
+                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} multiple accept=".txt,.md,.csv,.json,.pdf,.doc,.docx,.pptx,.xlsx" />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)] transition-colors"
+                >
                   <Paperclip className="w-3.5 h-3.5" />
                   Upload
                 </button>
-                <button className="p-2 rounded-lg text-[hsl(220,10%,55%)] hover:bg-[hsl(220,15%,92%)] transition-colors">
-                  <Mic className="w-4 h-4" />
+                <button
+                  onClick={toggleVoice}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isRecording
+                      ? "bg-red-100 text-red-600 animate-pulse"
+                      : "text-[hsl(220,10%,55%)] hover:bg-[hsl(220,15%,92%)]"
+                  }`}
+                >
+                  {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim() || loading}
+                  disabled={(!input.trim() && uploadedFiles.length === 0) || loading}
                   className="w-9 h-9 rounded-full gradient-btn flex items-center justify-center shadow-md shadow-primary/25 hover:shadow-primary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send className="w-4 h-4 text-white" />
