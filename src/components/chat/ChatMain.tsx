@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Mic, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 interface ChatMainProps {
   conversationId: string | null;
@@ -76,6 +80,7 @@ const ChatMain = ({
 
       if (!convId) return;
 
+      // Save user message to DB
       const { data: userMsg } = await supabase
         .from("chat_messages")
         .insert({
@@ -92,24 +97,133 @@ const ChatMain = ({
         setMessages((prev) => [...prev, userMsg]);
       }
 
-      // Placeholder AI response
-      const { data: aiMsg } = await supabase
-        .from("chat_messages")
-        .insert({
-          conversation_id: convId,
-          role: "assistant",
-          content: "I'm your AI Pitch Agent. I'll help you refine your ideas into compelling pitches. This is a placeholder response — connect an AI backend to get real responses.",
-          is_pitch: pitchMode,
-          is_search: webSearch,
-        })
-        .select()
-        .single();
+      // Build messages for AI (only role + content)
+      const aiMessages = [...messages, { role: "user", content: text }].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-      if (aiMsg) {
-        setMessages((prev) => [...prev, aiMsg]);
+      // Stream AI response
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: aiMessages, pitchMode, webSearch }),
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to get AI response",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!resp.body) throw new Error("No response body");
+
+      // Stream tokens
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let assistantContent = "";
+      let streamDone = false;
+      const tempId = `temp-${Date.now()}`;
+
+      // Add placeholder assistant message
+      setMessages((prev) => [...prev, { id: tempId, role: "assistant", content: "" }]);
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages((prev) =>
+                prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m))
+              );
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Flush remaining buffer
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages((prev) =>
+                prev.map((m) => (m.id === tempId ? { ...m, content: assistantContent } : m))
+              );
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Save assistant message to DB
+      if (assistantContent) {
+        const { data: savedAi } = await supabase
+          .from("chat_messages")
+          .insert({
+            conversation_id: convId,
+            role: "assistant",
+            content: assistantContent,
+            is_pitch: pitchMode,
+            is_search: webSearch,
+          })
+          .select()
+          .single();
+
+        if (savedAi) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === tempId ? savedAi : m))
+          );
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -155,7 +269,7 @@ const ChatMain = ({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          {messages.length === 0 ? (
+          {messages.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
               <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
                 <Sparkles className="w-7 h-7 text-white" />
@@ -185,12 +299,18 @@ const ChatMain = ({
                       : "bg-white text-[hsl(220,15%,20%)] border border-[hsl(220,15%,90%)] shadow-sm rounded-bl-md"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))
           )}
-          {loading && (
+          {loading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full gradient-btn flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
                 <Sparkles className="w-4 h-4 text-white" />
