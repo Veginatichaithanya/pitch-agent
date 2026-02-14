@@ -24,16 +24,21 @@ Your responses should be:
     if (pitchMode) {
       systemPrompt += `
 
-PITCH MODE IS ACTIVE. When the user shares an idea, structure your response as a complete pitch draft with these sections:
-1. **Title** — A catchy, memorable name
-2. **Problem Statement** — What problem does this solve?
-3. **Solution** — How does the idea address the problem?
-4. **Value Proposition** — Why is this unique/better?
-5. **Target Audience** — Who benefits?
-6. **Key Features** — 3-5 bullet points
-7. **Call to Action** — Next steps or ask
+PITCH MODE IS ACTIVE. When the user shares an idea, generate FOUR structured pitch drafts formatted as markdown sections:
 
-Format using markdown headings and bullet points.`;
+## 1. Problem
+Clearly define the problem that exists. Who is affected? Why does it matter? Use data or relatable scenarios.
+
+## 2. Solution
+Describe the proposed solution. How does it work? What makes it unique or innovative?
+
+## 3. Users & Impact
+Identify the target users/beneficiaries. What measurable impact will this have? Include potential scale.
+
+## 4. Feasibility
+Assess technical feasibility, required resources, timeline, and potential challenges. Include next steps.
+
+Make each section detailed (3-5 sentences minimum). Use bullet points where helpful. Be compelling and professional.`;
     }
 
     if (webSearch) {
