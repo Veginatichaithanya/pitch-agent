@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -13,12 +15,29 @@ const navLinks = [
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 transition-all duration-500">
@@ -50,12 +69,38 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* CTA */}
-        <a href="#cta" className="hidden md:block">
-          <Button className="gradient-btn rounded-full px-6 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-            Get Started
-          </Button>
-        </a>
+        {/* CTA + Auth */}
+        <div className="hidden md:flex items-center gap-3">
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground truncate max-w-[140px]">
+                {user.email}
+              </span>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="rounded-full px-4 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4 mr-1" /> Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={() => navigate("/auth")}
+                variant="ghost"
+                className="rounded-full px-5 text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20"
+              >
+                <LogIn className="w-4 h-4 mr-1" /> Login
+              </Button>
+              <a href="#cta">
+                <Button className="gradient-btn rounded-full px-6 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
+                  Get Started
+                </Button>
+              </a>
+            </>
+          )}
+        </div>
 
         {/* Mobile toggle */}
         <button
@@ -79,9 +124,22 @@ const Navbar = () => {
               {l.label}
             </a>
           ))}
-          <a href="#cta" onClick={() => setMobileOpen(false)}>
-            <Button className="gradient-btn rounded-full w-full mt-2">Get Started</Button>
-          </a>
+          {user ? (
+            <Button
+              onClick={() => { handleLogout(); setMobileOpen(false); }}
+              variant="ghost"
+              className="w-full mt-2 rounded-full text-muted-foreground"
+            >
+              <LogOut className="w-4 h-4 mr-1" /> Sign Out
+            </Button>
+          ) : (
+            <Button
+              onClick={() => { navigate("/auth"); setMobileOpen(false); }}
+              className="gradient-btn rounded-full w-full mt-2"
+            >
+              <LogIn className="w-4 h-4 mr-1" /> Login
+            </Button>
+          )}
         </div>
       )}
     </nav>
