@@ -36,7 +36,7 @@ const AboutSection = () => {
           {cards.map((c, i) => (
             <div
               key={c.title}
-              className={`glass rounded-2xl p-8 hover:bg-white/8 transition-all duration-500 group ${
+              className={`glass rounded-2xl p-8 hover:bg-white/10 transition-all duration-500 group ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: `${i * 150}ms` }}

@@ -27,7 +27,7 @@ const FeaturesSection = () => {
           {features.map((f, i) => (
             <div
               key={f.title}
-              className={`glass rounded-2xl p-7 group hover:bg-white/8 transition-all duration-500 relative overflow-hidden ${
+              className={`glass rounded-2xl p-7 group hover:bg-white/10 transition-all duration-500 relative overflow-hidden ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: `${i * 100}ms` }}

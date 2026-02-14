@@ -7,7 +7,7 @@ const HeroSection = () => (
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-[hsl(250,70%,50%)] opacity-10 blur-[120px] float-animation" />
       <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-[hsl(230,80%,55%)] opacity-10 blur-[100px] float-animation-delayed" />
-      <div className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full bg-[hsl(280,70%,50%)] opacity-8 blur-[80px] float-animation" />
+      <div className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full bg-[hsl(280,70%,50%)] opacity-10 blur-[80px] float-animation" />
     </div>
 
     <div className="container mx-auto px-6 relative z-10">

@@ -33,7 +33,7 @@ const HowItWorksSection = () => {
               }`}
               style={{ transitionDelay: `${i * 200}ms` }}
             >
-              <div className="glass rounded-2xl p-6 hover:bg-white/8 transition-all duration-300 group">
+              <div className="glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
                 <div className="w-14 h-14 rounded-2xl gradient-btn mx-auto mb-4 flex items-center justify-center relative group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow">
                   <s.icon className="w-6 h-6 text-white" />
                   <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
