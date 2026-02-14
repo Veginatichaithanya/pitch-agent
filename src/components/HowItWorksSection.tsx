@@ -12,16 +12,13 @@ const HowItWorksSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section id="how-it-works" className="py-28 relative">
+    <section id="how-it-works" className="py-24 relative">
       <div className="container mx-auto px-6" ref={ref}>
         <div className="text-center mb-16">
           <p className="text-sm font-medium text-accent uppercase tracking-widest mb-3">Process</p>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold gradient-text mb-4">
+          <h2 className="font-display text-4xl sm:text-5xl font-bold gradient-text">
             How It Works
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            From raw idea to polished pitch in four simple steps
-          </p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto relative">
@@ -36,15 +33,15 @@ const HowItWorksSection = () => {
               }`}
               style={{ transitionDelay: `${i * 200}ms` }}
             >
-              <div className="glass rounded-2xl p-7 hover:bg-white/10 transition-all duration-300 group h-full">
-                <div className="w-14 h-14 rounded-2xl gradient-btn mx-auto mb-5 flex items-center justify-center relative group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-110">
+              <div className="glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+                <div className="w-14 h-14 rounded-2xl gradient-btn mx-auto mb-4 flex items-center justify-center relative group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow">
                   <s.icon className="w-6 h-6 text-white" />
-                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center shadow-md">
+                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
                 </div>
-                <h3 className="font-display font-semibold text-foreground mb-2 text-lg">{s.label}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                <h3 className="font-display font-semibold text-foreground mb-2">{s.label}</h3>
+                <p className="text-sm text-muted-foreground">{s.desc}</p>
               </div>
             </div>
           ))}
