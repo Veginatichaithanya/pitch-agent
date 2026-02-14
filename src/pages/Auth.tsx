@@ -22,12 +22,15 @@ const Auth = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin,
       },
     });
+    if (error) {
+      console.error("Google sign-in error:", error.message);
+    }
   };
 
   return (
