@@ -20,7 +20,22 @@ interface Message {
   content: string;
   is_pitch?: boolean;
   is_search?: boolean;
+  created_at?: string;
 }
+
+const formatIST = (dateStr?: string) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 interface UploadedFile {
   name: string;
@@ -279,7 +294,7 @@ const ChatMain = ({
       let streamDone = false;
       const tempId = `temp-${Date.now()}`;
 
-      setMessages((prev) => [...prev, { id: tempId, role: "assistant", content: "" }]);
+      setMessages((prev) => [...prev, { id: tempId, role: "assistant", content: "", created_at: new Date().toISOString() }]);
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -402,19 +417,26 @@ const ChatMain = ({
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-[hsl(250,70%,60%)] text-white rounded-br-md"
-                      : "bg-white text-[hsl(220,15%,20%)] border border-[hsl(220,15%,90%)] shadow-sm rounded-bl-md"
-                  }`}
-                >
-                  {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    msg.content
+                <div className="flex flex-col gap-1">
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-[hsl(250,70%,60%)] text-white rounded-br-md"
+                        : "bg-white text-[hsl(220,15%,20%)] border border-[hsl(220,15%,90%)] shadow-sm rounded-bl-md"
+                    }`}
+                  >
+                    {msg.role === "assistant" ? (
+                      <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                  {msg.created_at && (
+                    <span className={`text-[10px] px-1 ${msg.role === "user" ? "text-[hsl(220,10%,60%)] text-right" : "text-[hsl(220,10%,60%)]"}`}>
+                      {formatIST(msg.created_at)}
+                    </span>
                   )}
                 </div>
               </div>
