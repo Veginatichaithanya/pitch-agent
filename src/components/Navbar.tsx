@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -13,6 +14,7 @@ const navLinks = [
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -51,11 +53,12 @@ const Navbar = () => {
         </div>
 
         {/* CTA */}
-        <a href="#cta" className="hidden md:block">
-          <Button className="gradient-btn rounded-full px-6 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-            Get Started
-          </Button>
-        </a>
+        <Button
+          onClick={() => navigate("/auth")}
+          className="hidden md:block gradient-btn rounded-full px-6 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow"
+        >
+          Get Started
+        </Button>
 
         {/* Mobile toggle */}
         <button
@@ -79,9 +82,9 @@ const Navbar = () => {
               {l.label}
             </a>
           ))}
-          <a href="#cta" onClick={() => setMobileOpen(false)}>
-            <Button className="gradient-btn rounded-full w-full mt-2">Get Started</Button>
-          </a>
+          <Button onClick={() => { setMobileOpen(false); navigate("/auth"); }} className="gradient-btn rounded-full w-full mt-2">
+            Get Started
+          </Button>
         </div>
       )}
     </nav>
