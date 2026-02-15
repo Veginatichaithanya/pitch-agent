@@ -425,10 +425,16 @@ const ChatMain = ({
         if (savedAi) {
           setMessages((prev) => prev.map((m) => (m.id === tempId ? savedAi : m)));
         }
+      } else {
+        // Remove empty temp message if no content was received
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        toast({ title: "No response", description: "AI did not return a response. Please try again.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Error sending message:", error);
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+      // Clean up any temp messages on error
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
     } finally {
       setLoading(false);
     }
