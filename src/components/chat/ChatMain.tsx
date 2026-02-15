@@ -58,6 +58,15 @@ const parseSourcesFromContent = (content: string): { cleanContent: string; sourc
   return { cleanContent, sources };
 };
 
+const getFavicon = (url: string) => {
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  } catch {
+    return "";
+  }
+};
+
 interface UploadedFile {
   name: string;
   path: string;
@@ -466,10 +475,11 @@ const ChatMain = ({
                                       href={src.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[hsl(220,20%,96%)] hover:bg-[hsl(250,60%,95%)] border border-[hsl(220,15%,90%)] text-[11px] text-[hsl(250,70%,50%)] hover:text-[hsl(250,70%,40%)] transition-colors max-w-[200px]"
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[hsl(220,20%,96%)] hover:bg-[hsl(250,60%,95%)] border border-[hsl(220,15%,90%)] text-[11px] text-[hsl(250,70%,50%)] hover:text-[hsl(250,70%,40%)] transition-colors max-w-[220px] group"
                                     >
-                                      <ExternalLink className="w-3 h-3 shrink-0" />
+                                      <img src={getFavicon(src.url)} alt="" className="w-4 h-4 rounded-sm shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                       <span className="truncate">{src.title}</span>
+                                      <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </a>
                                   ))}
                                 </div>
@@ -492,16 +502,23 @@ const ChatMain = ({
             ))
           )}
           {loading && messages[messages.length - 1]?.role !== "assistant" && (
-            <div className="flex gap-3">
+            <div className="flex gap-3 animate-fade-in">
               <div className="w-8 h-8 rounded-full gradient-btn flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="bg-white border border-[hsl(220,15%,90%)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
+                {webSearch ? (
+                  <div className="flex items-center gap-2 text-sm text-[hsl(220,10%,45%)]">
+                    <Globe className="w-4 h-4 text-[hsl(250,70%,60%)] animate-spin" style={{ animationDuration: "2s" }} />
+                    <span className="animate-pulse">Searching the web...</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                )}
               </div>
             </div>
           )}
