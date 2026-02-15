@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch } = await req.json();
+    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -158,6 +158,57 @@ STRICT RULES:
 6. Keep the tone professional but challenging — like a real judge.
 7. When the user answers your questions, respond as the judge would: acknowledge their answer, share your updated perception, and ask deeper follow-up questions if needed.
 8. This is a conversational Q&A simulation — keep the dialogue going like a real pitch session.`;
+    }
+
+    if (mindMapMode) {
+      systemPrompt += `
+
+MIND MAP MODE IS ACTIVE. Generate a structured mind map from the user's idea in a notebook-style format.
+
+Use this EXACT format:
+
+---MINDMAP---
+🎯 [CENTRAL IDEA NAME]
+│
+├── 🔴 Problem
+│   ├── [pain point 1]
+│   ├── [pain point 2]
+│   └── [pain point 3]
+│
+├── 💡 Solution
+│   ├── [solution aspect 1]
+│   ├── [solution aspect 2]
+│   └── [solution aspect 3]
+│
+├── 👥 Users
+│   ├── [target user 1]
+│   ├── [target user 2]
+│   └── [target user 3]
+│
+├── 🌍 Impact
+│   ├── [impact 1]
+│   ├── [impact 2]
+│   └── [impact 3]
+│
+├── ⚡ Features
+│   ├── [feature 1]
+│   ├── [feature 2]
+│   └── [feature 3]
+│
+└── ✅ Feasibility
+    ├── [feasibility point 1]
+    ├── [feasibility point 2]
+    └── [feasibility point 3]
+---END_MINDMAP---
+
+STRICT RULES:
+- Use ONLY short keywords or phrases (max 6 words per node)
+- NO paragraphs, NO explanations, NO feedback, NO scores
+- Use the tree characters (├── └── │) to show hierarchy
+- Keep it clean, organized like a student's brainstorming notebook
+- You may add sub-branches under each point if relevant
+- ALWAYS wrap output between ---MINDMAP--- and ---END_MINDMAP--- delimiters
+- Output ONLY the mind map content, nothing else`;
     }
 
     if (webSearch) {
