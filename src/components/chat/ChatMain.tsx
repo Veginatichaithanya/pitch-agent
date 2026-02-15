@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -89,6 +89,7 @@ const ChatMain = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [pitchMode, setPitchMode] = useState(false);
+  const [pitchLength, setPitchLength] = useState<"short" | "long">("short");
   const [webSearch, setWebSearch] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -312,7 +313,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, webSearch }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, webSearch }),
       });
 
       if (!resp.ok) {
@@ -613,6 +614,33 @@ const ChatMain = ({
                   <Globe className="w-3.5 h-3.5" />
                   Web Search
                 </button>
+                {pitchMode && (
+                  <>
+                    <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+                    <button
+                      onClick={() => setPitchLength("short")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        pitchLength === "short"
+                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      <AlignLeft className="w-3.5 h-3.5" />
+                      Short
+                    </button>
+                    <button
+                      onClick={() => setPitchLength("long")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        pitchLength === "long"
+                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      <AlignJustify className="w-3.5 h-3.5" />
+                      Long
+                    </button>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-1">
