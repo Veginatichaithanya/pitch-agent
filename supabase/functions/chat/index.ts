@@ -26,6 +26,13 @@ Your responses should be:
 
 PITCH MODE IS ACTIVE. When the user shares an idea, generate EXACTLY 4 separate pitch drafts. Each draft should take a DIFFERENT angle or approach to pitching the same idea.
 
+STRICT CONTENT RULES — NEVER VIOLATE:
+- Write ONLY from the perspective of someone PRESENTING the idea to judges, investors, or an audience.
+- NEVER mention: AI models, LLMs, APIs, API keys, backend, frontend, architecture, databases, security systems, data privacy concerns, tech stack, deployment, servers, authentication, or any implementation/engineering details.
+- Focus ONLY on the PITCH CONTENT: the problem, the solution, who benefits, and why it's feasible.
+- "Feasibility" means real-world viability: cost, timeline, team, market readiness — NOT technical architecture.
+- Keep language simple, clear, and pitch-ready. No jargon. No backend talk.
+
 Use this EXACT format with delimiters:
 
 ---DRAFT_1---
@@ -33,13 +40,13 @@ Use this EXACT format with delimiters:
 Clearly define the problem. Who is affected? Why does it matter?
 
 ## Solution
-Describe the proposed solution. How does it work? What makes it unique?
+Describe the proposed solution in plain language. How does it help? What makes it unique?
 
 ## Users & Impact
 Identify target users. What measurable impact will this have?
 
 ## Feasibility
-Assess technical feasibility, resources, timeline, and challenges.
+Assess real-world feasibility: cost, resources, timeline, market readiness.
 
 ---DRAFT_2---
 ## Problem
@@ -52,20 +59,20 @@ Assess technical feasibility, resources, timeline, and challenges.
 (Different target audience or impact metrics)
 
 ## Feasibility
-(Different implementation strategy)
+(Different viability angle)
 
 ---DRAFT_3---
-(Third unique angle)
+(Third unique angle — all 4 sections required)
 
 ---DRAFT_4---
-(Fourth unique angle)
+(Fourth unique angle — all 4 sections required)
 
 IMPORTANT RULES:
 - Each draft MUST start with ---DRAFT_N--- delimiter
 - Each draft should be a COMPLETE pitch with all 4 sections
-- Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, technical, storytelling
-- Make each section 3-5 sentences minimum with bullet points where helpful
-- Be compelling and professional in all drafts`;
+- Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, emotional storytelling, data-driven
+- Make each section 3-5 sentences minimum
+- Be compelling, professional, and FREE of any technical/system language`;
     }
 
     if (webSearch) {
