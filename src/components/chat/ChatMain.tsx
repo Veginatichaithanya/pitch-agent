@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel, Maximize2, Minimize2, Network } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -79,6 +79,12 @@ const parseSlides = (content: string): string[] => {
   return parts.length > 1 ? parts : [];
 };
 
+const parseMindMap = (content: string): string | null => {
+  const regex = /---MINDMAP---([\s\S]*?)---END_MINDMAP---/;
+  const match = content.match(regex);
+  return match ? match[1].trim() : null;
+};
+
 const getFavicon = (url: string) => {
   try {
     const domain = new URL(url).hostname;
@@ -109,6 +115,7 @@ const ChatMain = ({
   const [judgeMode, setJudgeMode] = useState(false);
   const [judgeType, setJudgeType] = useState<"investor" | "academic" | "hackathon">("investor");
   const [webSearch, setWebSearch] = useState(false);
+  const [mindMapMode, setMindMapMode] = useState(false);
   const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
   const [fullscreenSlide, setFullscreenSlide] = useState<{ msgId: string; slides: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -333,7 +340,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode }),
       });
 
       if (!resp.ok) {
@@ -486,10 +493,40 @@ const ChatMain = ({
                     {msg.role === "assistant" ? (
                       (() => {
                         const { cleanContent, sources } = parseSourcesFromContent(msg.content);
+                        const mindMap = parseMindMap(cleanContent);
                         const drafts = parseDrafts(cleanContent);
                         const slides = parseSlides(cleanContent);
                         const currentDraftIdx = draftIndices[msg.id] || 0;
                         const currentSlideIdx = slideIndices[msg.id] || 0;
+
+                        // Mind map rendering
+                        if (mindMap) {
+                          const lines = mindMap.split("\n");
+                          return (
+                            <div className="w-full min-w-[340px]">
+                              <div className="bg-[hsl(45,30%,96%)] border border-[hsl(40,20%,85%)] rounded-2xl p-6 shadow-inner">
+                                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[hsl(40,20%,85%)]">
+                                  <Network className="w-4 h-4 text-[hsl(250,70%,60%)]" />
+                                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(220,10%,45%)]">Mind Map</span>
+                                </div>
+                                <pre className="font-mono text-sm leading-relaxed text-[hsl(220,15%,25%)] whitespace-pre-wrap overflow-x-auto [&]:bg-transparent [&]:p-0 [&]:m-0 [&]:border-0">
+                                  {lines.map((line, i) => {
+                                    const isCentral = line.includes("🎯");
+                                    const isBranch = /[├└]──\s*[🔴💡👥🌍⚡✅]/.test(line);
+                                    return (
+                                      <span
+                                        key={i}
+                                        className={`block ${isCentral ? "text-lg font-bold text-[hsl(250,70%,50%)]" : isBranch ? "font-semibold text-[hsl(220,15%,20%)]" : ""}`}
+                                      >
+                                        {line}
+                                      </span>
+                                    );
+                                  })}
+                                </pre>
+                              </div>
+                            </div>
+                          );
+                        }
 
                         // Slide deck rendering
                         if (slides.length > 1) {
@@ -704,6 +741,17 @@ const ChatMain = ({
                 >
                   <Globe className="w-3.5 h-3.5" />
                   Web Search
+                </button>
+                <button
+                  onClick={() => setMindMapMode(!mindMapMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    mindMapMode
+                      ? "bg-[hsl(170,60%,42%)] text-white shadow-md shadow-[hsl(170,60%,42%)]/20"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  <Network className="w-3.5 h-3.5" />
+                  Mind Map
                 </button>
                 {pitchMode && (
                   <>
