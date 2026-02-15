@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import monkeyLogo from "@/assets/monkey-logo.png";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -438,9 +439,7 @@ const ChatMain = ({
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-              <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-                <Sparkles className="w-7 h-7 text-white" />
-              </div>
+              <img src={monkeyLogo} alt="Pitch Agent" className="w-16 h-16 mb-4 animate-bounce" style={{ animationDuration: '2s' }} />
               <h2 className="font-display text-2xl font-bold text-[hsl(220,15%,20%)] mb-2">How can I help you today?</h2>
               <p className="text-[hsl(220,10%,50%)] text-sm max-w-md">
                 Enter your idea, upload a document, or use voice input. Toggle <strong>Pitch Mode</strong> for structured drafts.
