@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel, Maximize2, Minimize2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -110,6 +110,7 @@ const ChatMain = ({
   const [judgeType, setJudgeType] = useState<"investor" | "academic" | "hackathon">("investor");
   const [webSearch, setWebSearch] = useState(false);
   const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
+  const [fullscreenSlide, setFullscreenSlide] = useState<{ msgId: string; slides: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -497,41 +498,54 @@ const ChatMain = ({
                           const slideColor = SLIDE_COLORS[currentSlideIdx] || SLIDE_COLORS[0];
 
                           return (
-                            <div className="w-full">
-                              {/* Slide card */}
-                              <div className={`relative bg-gradient-to-br ${slideColor} rounded-xl p-6 min-h-[220px] text-white shadow-lg`}>
-                                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-0.5 text-[10px] font-semibold">
-                                  {currentSlideIdx + 1} / {slides.length}
-                                </div>
-                                <div className="mb-3">
-                                  <span className="text-[11px] uppercase tracking-wider font-semibold opacity-80">{slideLabel}</span>
-                                </div>
-                                <div className="prose prose-sm prose-invert max-w-none [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5 [&_li]:text-sm">
-                                  <ReactMarkdown>{slideContent}</ReactMarkdown>
+                            <div className="w-full min-w-[340px]">
+                              {/* Slide card - 16:9 aspect ratio */}
+                              <div className={`relative bg-gradient-to-br ${slideColor} rounded-2xl shadow-2xl overflow-hidden`} style={{ aspectRatio: "16/9" }}>
+                                <div className="absolute inset-0 bg-black/5" />
+                                <div className="relative h-full flex flex-col p-8">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-white/70 bg-white/10 px-3 py-1 rounded-full">{slideLabel}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-[11px] font-bold text-white/90">
+                                        {currentSlideIdx + 1} / {slides.length}
+                                      </span>
+                                      <button
+                                        onClick={() => setFullscreenSlide({ msgId: msg.id, slides })}
+                                        className="bg-white/20 backdrop-blur-sm rounded-full p-1.5 hover:bg-white/30 transition-colors"
+                                      >
+                                        <Maximize2 className="w-3.5 h-3.5 text-white" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 flex items-center">
+                                    <div className="prose prose-invert max-w-none w-full [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-lg [&_p]:mb-2 [&_p]:text-base [&_ul]:mb-2 [&_ul]:space-y-1.5 [&_li]:text-base [&_li]:leading-relaxed [&_strong]:text-white">
+                                      <ReactMarkdown>{slideContent}</ReactMarkdown>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                              {/* Slide navigation dots + arrows */}
-                              <div className="flex items-center justify-center gap-3 mt-3">
+                              {/* Slide navigation */}
+                              <div className="flex items-center justify-center gap-3 mt-4">
                                 <button
                                   onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: Math.max(0, currentSlideIdx - 1) }))}
                                   disabled={currentSlideIdx === 0}
-                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                  className="w-9 h-9 rounded-full border border-[hsl(220,15%,85%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                                 >
                                   <ChevronLeft className="w-4 h-4 text-[hsl(220,10%,30%)]" />
                                 </button>
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-2">
                                   {slides.map((_, i) => (
                                     <button
                                       key={i}
                                       onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: i }))}
-                                      className={`w-2 h-2 rounded-full transition-all ${i === currentSlideIdx ? "bg-[hsl(250,70%,60%)] scale-125" : "bg-[hsl(220,15%,80%)] hover:bg-[hsl(220,15%,65%)]"}`}
+                                      className={`rounded-full transition-all ${i === currentSlideIdx ? "w-6 h-2.5 bg-[hsl(250,70%,60%)]" : "w-2.5 h-2.5 bg-[hsl(220,15%,78%)] hover:bg-[hsl(220,15%,60%)]"}`}
                                     />
                                   ))}
                                 </div>
                                 <button
                                   onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: Math.min(slides.length - 1, currentSlideIdx + 1) }))}
                                   disabled={currentSlideIdx === slides.length - 1}
-                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                  className="w-9 h-9 rounded-full border border-[hsl(220,15%,85%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                                 >
                                   <ChevronRight className="w-4 h-4 text-[hsl(220,10%,30%)]" />
                                 </button>
@@ -814,6 +828,89 @@ const ChatMain = ({
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Slide Overlay */}
+      {fullscreenSlide && (() => {
+        const fsIdx = slideIndices[fullscreenSlide.msgId] || 0;
+        const fsContent = fullscreenSlide.slides[fsIdx] || "";
+        const fsLabel = SLIDE_LABELS[fsIdx] || `Slide ${fsIdx + 1}`;
+        const fsColor = SLIDE_COLORS[fsIdx] || SLIDE_COLORS[0];
+        const fsTotal = fullscreenSlide.slides.length;
+
+        const goNext = () => setSlideIndices((prev) => ({ ...prev, [fullscreenSlide.msgId]: Math.min(fsTotal - 1, fsIdx + 1) }));
+        const goPrev = () => setSlideIndices((prev) => ({ ...prev, [fullscreenSlide.msgId]: Math.max(0, fsIdx - 1) }));
+
+        return (
+          <div
+            className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center"
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goNext(); }
+              if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+              if (e.key === "Escape") setFullscreenSlide(null);
+            }}
+            tabIndex={0}
+            ref={(el) => el?.focus()}
+          >
+            {/* Exit button */}
+            <button
+              onClick={() => setFullscreenSlide(null)}
+              className="absolute top-6 right-6 z-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full p-3 transition-colors"
+            >
+              <Minimize2 className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Slide */}
+            <div className="w-full max-w-5xl px-8">
+              <div className={`relative bg-gradient-to-br ${fsColor} rounded-3xl shadow-2xl overflow-hidden`} style={{ aspectRatio: "16/9" }}>
+                <div className="absolute inset-0 bg-black/5" />
+                <div className="relative h-full flex flex-col p-12 md:p-16">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-sm uppercase tracking-[0.25em] font-bold text-white/70 bg-white/10 px-4 py-1.5 rounded-full">{fsLabel}</span>
+                    <span className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-bold text-white/90">
+                      {fsIdx + 1} / {fsTotal}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <div className="prose prose-lg prose-invert max-w-none w-full [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-5 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-4 [&_h3]:text-2xl [&_p]:mb-3 [&_p]:text-xl [&_ul]:mb-3 [&_ul]:space-y-3 [&_li]:text-xl [&_li]:leading-relaxed [&_strong]:text-white">
+                      <ReactMarkdown>{fsContent}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-center gap-6 mt-8">
+              <button
+                onClick={goPrev}
+                disabled={fsIdx === 0}
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" />
+              </button>
+              <div className="flex gap-3">
+                {fullscreenSlide.slides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSlideIndices((prev) => ({ ...prev, [fullscreenSlide.msgId]: i }))}
+                    className={`rounded-full transition-all ${i === fsIdx ? "w-8 h-3 bg-white" : "w-3 h-3 bg-white/30 hover:bg-white/50"}`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={goNext}
+                disabled={fsIdx === fsTotal - 1}
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
+            </div>
+
+            {/* Keyboard hint */}
+            <p className="text-white/30 text-xs mt-6">Use ← → arrow keys to navigate · ESC to exit</p>
+          </div>
+        );
+      })()}
     </div>
   );
 };
