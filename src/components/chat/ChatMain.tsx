@@ -142,6 +142,7 @@ const ChatMain = ({
   const [judgeType, setJudgeType] = useState<"investor" | "academic" | "hackathon">("investor");
   const [webSearch, setWebSearch] = useState(false);
   const [mindMapMode, setMindMapMode] = useState(false);
+  const [visualizeMode, setVisualizeMode] = useState(false);
   const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
   const [fullscreenSlide, setFullscreenSlide] = useState<{ msgId: string; slides: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -366,7 +367,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode }),
       });
 
       if (!resp.ok) {
@@ -858,6 +859,17 @@ const ChatMain = ({
               >
                 <Network className="w-3.5 h-3.5" />
                 Mind Map
+              </button>
+              <button
+                onClick={() => setVisualizeMode(!visualizeMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  visualizeMode
+                    ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
+                    : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                Visualize
               </button>
               <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
               <button
