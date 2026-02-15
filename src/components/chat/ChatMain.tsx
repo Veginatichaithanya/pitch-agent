@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -106,6 +106,8 @@ const ChatMain = ({
   const [pitchMode, setPitchMode] = useState(false);
   const [pitchLength, setPitchLength] = useState<"short" | "long">("short");
   const [presentationMode, setPresentationMode] = useState(false);
+  const [judgeMode, setJudgeMode] = useState(false);
+  const [judgeType, setJudgeType] = useState<"investor" | "academic" | "hackathon">("investor");
   const [webSearch, setWebSearch] = useState(false);
   const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
@@ -330,7 +332,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, webSearch }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch }),
       });
 
       if (!resp.ok) {
@@ -729,6 +731,53 @@ const ChatMain = ({
                     >
                       <AlignJustify className="w-3.5 h-3.5" />
                       Long
+                    </button>
+                  </>
+                )}
+                {/* Judge Mode toggle */}
+                <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+                <button
+                  onClick={() => setJudgeMode(!judgeMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    judgeMode
+                      ? "bg-[hsl(350,65%,50%)] text-white shadow-md shadow-[hsl(350,65%,50%)]/20"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  <Gavel className="w-3.5 h-3.5" />
+                  Judge
+                </button>
+                {judgeMode && (
+                  <>
+                    <button
+                      onClick={() => setJudgeType("investor")}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                        judgeType === "investor"
+                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      💼 Investor
+                    </button>
+                    <button
+                      onClick={() => setJudgeType("academic")}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                        judgeType === "academic"
+                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      🎓 Academic
+                    </button>
+                    <button
+                      onClick={() => setJudgeType("hackathon")}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                        judgeType === "hackathon"
+                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      🏆 Hackathon
                     </button>
                   </>
                 )}

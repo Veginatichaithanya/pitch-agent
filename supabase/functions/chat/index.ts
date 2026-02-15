@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, pitchLength, presentationMode, webSearch } = await req.json();
+    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -126,6 +126,38 @@ IMPORTANT RULES:
 - Each draft should be a COMPLETE pitch with all 4 sections
 - Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, emotional storytelling, data-driven
 - Be compelling, professional, and FREE of any technical/system language`;
+    }
+
+    if (judgeMode) {
+      const judgeTypeUpper = (judgeType || "investor").toUpperCase();
+      let focusArea = "";
+      let judgeEmoji = "💼";
+      if (judgeTypeUpper === "INVESTOR") {
+        focusArea = "market value, scalability, revenue model, ROI potential, and competitive advantage";
+        judgeEmoji = "💼";
+      } else if (judgeTypeUpper === "ACADEMIC") {
+        focusArea = "learning value, problem-solving depth, research rigor, and intellectual merit";
+        judgeEmoji = "🎓";
+      } else if (judgeTypeUpper === "HACKATHON") {
+        focusArea = "creativity, practicality, innovation, technical cleverness, and demo-readiness";
+        judgeEmoji = "🏆";
+      }
+
+      systemPrompt += `
+
+JUDGE SIMULATION MODE IS ACTIVE. You are simulating a ${judgeTypeUpper} pitch judge ${judgeEmoji}.
+
+Your focus areas: ${focusArea}
+
+STRICT RULES:
+1. First, write a short "Judge's Perception" section: what the judge understands from this pitch based on their focus area. Write it in first person as the judge. Be direct and honest.
+2. Then, ask 2-3 tough, probing questions that this type of judge would ask. Format them as a numbered list under "## Questions from the Judge".
+3. Do NOT score the pitch.
+4. Do NOT give advice or suggestions.
+5. Only share the judge's perception and follow-up questions.
+6. Keep the tone professional but challenging — like a real judge.
+7. When the user answers your questions, respond as the judge would: acknowledge their answer, share your updated perception, and ask deeper follow-up questions if needed.
+8. This is a conversational Q&A simulation — keep the dialogue going like a real pitch session.`;
     }
 
     if (webSearch) {
