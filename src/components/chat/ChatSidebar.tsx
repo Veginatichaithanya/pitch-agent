@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, MessageSquare, Settings, LogOut, User, Sparkles } from "lucide-react";
+import { Plus, Search, MessageSquare, Settings, LogOut, User, Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +28,9 @@ const ChatSidebar = ({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [search, setSearch] = useState("");
   const [userName, setUserName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchConversations();
@@ -57,6 +60,27 @@ const ChatSidebar = ({
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const handleRename = (conv: Conversation) => {
+    setEditingId(conv.id);
+    setEditTitle(conv.title || "New Chat");
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleRenameSubmit = async (id: string) => {
+    if (editTitle.trim()) {
+      await supabase.from("conversations").update({ title: editTitle.trim() }).eq("id", id);
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title: editTitle.trim() } : c)));
+    }
+    setEditingId(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("chat_messages").delete().eq("conversation_id", id);
+    await supabase.from("conversations").delete().eq("id", id);
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeConversationId === id) onNewChat();
   };
 
   const filtered = conversations.filter((c) =>
@@ -103,18 +127,48 @@ const ChatSidebar = ({
           </p>
         ) : (
           filtered.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => onSelectConversation(conv.id)}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors text-left mb-0.5 ${
-                activeConversationId === conv.id
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-              }`}
-            >
-              <MessageSquare className="w-4 h-4 shrink-0" />
-              <span className="truncate">{conv.title || "New Chat"}</span>
-            </button>
+            <div key={conv.id} className="group relative mb-0.5">
+              {editingId === conv.id ? (
+                <div className="flex items-center gap-1 px-2 py-1.5">
+                  <input
+                    ref={editInputRef}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRenameSubmit(conv.id);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    className="flex-1 bg-secondary border border-ring rounded px-2 py-1 text-sm text-foreground focus:outline-none"
+                  />
+                  <button onClick={() => handleRenameSubmit(conv.id)} className="p-1 text-green-400 hover:text-green-300">
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setEditingId(null)} className="p-1 text-muted-foreground hover:text-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => onSelectConversation(conv.id)}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
+                    activeConversationId === conv.id
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 shrink-0" />
+                  <span className="truncate flex-1">{conv.title || "New Chat"}</span>
+                  <span className="hidden group-hover:flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={(e) => { e.stopPropagation(); handleRename(conv); }} className="p-1 rounded hover:bg-background/50 text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(conv.id); }} className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                </button>
+              )}
+            </div>
           ))
         )}
       </div>
