@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -35,6 +35,27 @@ const formatIST = (dateStr?: string) => {
     minute: "2-digit",
     hour12: true,
   });
+};
+
+interface SourceLink {
+  title: string;
+  url: string;
+}
+
+const parseSourcesFromContent = (content: string): { cleanContent: string; sources: SourceLink[] } => {
+  const sourcesRegex = /---SOURCES---\n([\s\S]*?)---END_SOURCES---/;
+  const match = content.match(sourcesRegex);
+  if (!match) return { cleanContent: content, sources: [] };
+
+  const cleanContent = content.replace(sourcesRegex, "").trim();
+  const sourcesBlock = match[1].trim();
+  const sources: SourceLink[] = [];
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = linkRegex.exec(sourcesBlock)) !== null) {
+    sources.push({ title: m[1], url: m[2] });
+  }
+  return { cleanContent, sources };
 };
 
 interface UploadedFile {
@@ -426,9 +447,37 @@ const ChatMain = ({
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      (() => {
+                        const { cleanContent, sources } = parseSourcesFromContent(msg.content);
+                        return (
+                          <>
+                            <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
+                              <ReactMarkdown>{cleanContent}</ReactMarkdown>
+                            </div>
+                            {sources.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-[hsl(220,15%,90%)]">
+                                <p className="text-[11px] font-semibold text-[hsl(220,10%,50%)] mb-2 flex items-center gap-1">
+                                  <Globe className="w-3 h-3" /> Sources
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {sources.map((src, i) => (
+                                    <a
+                                      key={i}
+                                      href={src.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[hsl(220,20%,96%)] hover:bg-[hsl(250,60%,95%)] border border-[hsl(220,15%,90%)] text-[11px] text-[hsl(250,70%,50%)] hover:text-[hsl(250,70%,40%)] transition-colors max-w-[200px]"
+                                    >
+                                      <ExternalLink className="w-3 h-3 shrink-0" />
+                                      <span className="truncate">{src.title}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()
                     ) : (
                       msg.content
                     )}
