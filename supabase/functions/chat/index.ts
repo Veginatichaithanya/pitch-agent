@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, webSearch } = await req.json();
+    const { messages, pitchMode, pitchLength, webSearch } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -22,9 +22,16 @@ Your responses should be:
 - Focused on making ideas more compelling and presentable`;
 
     if (pitchMode) {
+      const isShort = pitchLength !== "long";
+      const lengthGuide = isShort
+        ? "Keep each section to 2-3 concise sentences. Be punchy, direct, and impactful. Total pitch should fit on one slide."
+        : "Make each section 5-8 detailed sentences with examples, data points, and compelling narratives. Provide depth and nuance.";
+
       systemPrompt += `
 
-PITCH MODE IS ACTIVE. When the user shares an idea, generate EXACTLY 4 separate pitch drafts. Each draft should take a DIFFERENT angle or approach to pitching the same idea.
+PITCH MODE IS ACTIVE (${isShort ? "SHORT" : "LONG"} FORMAT). When the user shares an idea, generate EXACTLY 4 separate pitch drafts. Each draft should take a DIFFERENT angle or approach to pitching the same idea.
+
+LENGTH INSTRUCTIONS: ${lengthGuide}
 
 STRICT CONTENT RULES — NEVER VIOLATE:
 - Write ONLY from the perspective of someone PRESENTING the idea to judges, investors, or an audience.
@@ -71,7 +78,6 @@ IMPORTANT RULES:
 - Each draft MUST start with ---DRAFT_N--- delimiter
 - Each draft should be a COMPLETE pitch with all 4 sections
 - Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, emotional storytelling, data-driven
-- Make each section 3-5 sentences minimum
 - Be compelling, professional, and FREE of any technical/system language`;
     }
 
