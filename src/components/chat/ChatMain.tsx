@@ -96,6 +96,7 @@ interface ChartData {
   type: "pie" | "bar" | "radar";
   title: string;
   data: { name: string; value: number }[];
+  explanation?: string;
 }
 
 const parseCharts = (content: string): { cleanContent: string; charts: ChartData[] } => {
@@ -581,6 +582,11 @@ const ChatMain = ({
                                       </BarChart>
                                     </ResponsiveContainer>
                                   )}
+                                  {chart.explanation && (
+                                    <p className="mt-3 text-[11px] text-[hsl(220,10%,45%)] leading-relaxed border-t border-[hsl(220,15%,92%)] pt-2 italic">
+                                      💡 {chart.explanation}
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -756,7 +762,21 @@ const ChatMain = ({
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="bg-white border border-[hsl(220,15%,90%)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                {webSearch ? (
+                {visualizeMode ? (
+                  <div className="flex items-center gap-3 text-sm text-[hsl(220,10%,45%)]">
+                    <div className="relative w-5 h-5">
+                      <BarChart3 className="w-5 h-5 text-[hsl(30,80%,50%)] animate-pulse" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[hsl(30,80%,50%)] animate-ping" />
+                    </div>
+                    <span className="animate-pulse font-medium">Generating charts...</span>
+                    <div className="flex gap-0.5">
+                      <span className="w-1.5 h-3 rounded-sm bg-[hsl(250,70%,60%)] animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-5 rounded-sm bg-[hsl(170,60%,42%)] animate-bounce" style={{ animationDelay: "100ms" }} />
+                      <span className="w-1.5 h-4 rounded-sm bg-[hsl(30,80%,50%)] animate-bounce" style={{ animationDelay: "200ms" }} />
+                      <span className="w-1.5 h-6 rounded-sm bg-[hsl(350,65%,50%)] animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                ) : webSearch ? (
                   <div className="flex items-center gap-2 text-sm text-[hsl(220,10%,45%)]">
                     <Globe className="w-4 h-4 text-[hsl(250,70%,60%)] animate-spin" style={{ animationDuration: "2s" }} />
                     <span className="animate-pulse">Searching the web...</span>
