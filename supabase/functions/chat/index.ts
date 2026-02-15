@@ -265,7 +265,7 @@ Analyze the idea and generate 3-4 relevant charts. Include a brief 1-2 sentence 
 
 ---CHARTS---
 [
-  {"type":"${visualizeType || "bar"}","title":"Chart Title","explanation":"A 1-2 sentence insight explaining what this chart reveals and why it matters for the pitch.","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]}
+  {"type":"${visualizeType || "bar"}","title":"Chart Title","explanation":"Provide a detailed 3-4 sentence explanation: (1) What the data represents and how it was estimated. (2) The key insight or trend the chart reveals. (3) Why this matters for the pitch and what action or decision it supports.","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]}
 ]
 ---END_CHARTS---
 
@@ -274,7 +274,7 @@ ${chartTypeInstruction}
 CHART RULES:
 - Generate 3-4 charts covering: market size, growth projection, user demographics, competitive landscape, revenue breakdown, impact metrics
 - ALL charts MUST be type "${visualizeType || "bar"}" only
-- Each chart MUST include an "explanation" field: a 1-2 sentence insight about what the data shows and its significance for the pitch
+- Each chart MUST include an "explanation" field: a detailed 3-4 sentence analysis covering what the data shows, the key trend or insight, and why it matters for the pitch strategy. Do NOT write short 1-line explanations.
 - Use realistic, meaningful values relevant to the idea
 - Keep data labels short (max 3 words)
 - Output valid JSON only between the delimiters

@@ -583,9 +583,17 @@ const ChatMain = ({
                                     </ResponsiveContainer>
                                   )}
                                   {chart.explanation && (
-                                    <p className="mt-3 text-[11px] text-[hsl(220,10%,45%)] leading-relaxed border-t border-[hsl(220,15%,92%)] pt-2 italic">
-                                      💡 {chart.explanation}
-                                    </p>
+                                    <div className="mt-4 bg-muted/50 rounded-lg p-3 border border-border">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-base mt-0.5">💡</span>
+                                        <div>
+                                          <p className="text-xs font-semibold text-foreground mb-1">Chart Insight</p>
+                                          <p className="text-xs text-muted-foreground leading-relaxed">
+                                            {chart.explanation}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               ))}
