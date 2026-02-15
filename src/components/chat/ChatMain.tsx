@@ -749,7 +749,7 @@ const ChatMain = ({
               </div>
             </div>
             {/* Bottom row: mode toggles */}
-            <div className="flex items-center gap-1.5 px-4 pb-3 flex-wrap">
+            <div className="flex items-center gap-1.5 px-4 pb-2 flex-wrap">
               <button
                 onClick={() => setPitchMode(!pitchMode)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -783,49 +783,6 @@ const ChatMain = ({
                 <Network className="w-3.5 h-3.5" />
                 Mind Map
               </button>
-              {pitchMode && (
-                <>
-                  <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
-                  <button
-                    onClick={() => setPresentationMode(!presentationMode)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      presentationMode
-                        ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
-                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                    }`}
-                  >
-                    <Presentation className="w-3.5 h-3.5" />
-                    Slides
-                  </button>
-                </>
-              )}
-              {pitchMode && !presentationMode && (
-                <>
-                  <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
-                  <button
-                    onClick={() => setPitchLength("short")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      pitchLength === "short"
-                        ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
-                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                    }`}
-                  >
-                    <AlignLeft className="w-3.5 h-3.5" />
-                    Short
-                  </button>
-                  <button
-                    onClick={() => setPitchLength("long")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      pitchLength === "long"
-                        ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
-                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                    }`}
-                  >
-                    <AlignJustify className="w-3.5 h-3.5" />
-                    Long
-                  </button>
-                </>
-              )}
               <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
               <button
                 onClick={() => setJudgeMode(!judgeMode)}
@@ -873,6 +830,48 @@ const ChatMain = ({
                 </>
               )}
             </div>
+            {/* Pitch sub-options row (only when Pitch Mode is active) */}
+            {pitchMode && (
+              <div className="flex items-center gap-1.5 px-4 pb-3 flex-wrap">
+                <button
+                  onClick={() => setPresentationMode(!presentationMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    presentationMode
+                      ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  <Presentation className="w-3.5 h-3.5" />
+                  Slides
+                </button>
+                {!presentationMode && (
+                  <>
+                    <button
+                      onClick={() => setPitchLength("short")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        pitchLength === "short"
+                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      <AlignLeft className="w-3.5 h-3.5" />
+                      Short
+                    </button>
+                    <button
+                      onClick={() => setPitchLength("long")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        pitchLength === "long"
+                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      <AlignJustify className="w-3.5 h-3.5" />
+                      Long
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
