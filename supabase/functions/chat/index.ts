@@ -73,14 +73,15 @@ AFTER the slides, you MUST also generate a visual data section for charts. Use t
 
 ---CHARTS---
 [
-  {"type":"pie","title":"Target Market Breakdown","data":[{"name":"Segment A","value":40},{"name":"Segment B","value":30},{"name":"Segment C","value":30}]},
-  {"type":"bar","title":"Growth Projection","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":50000},{"name":"Year 3","value":150000}]}
+  {"type":"pie","title":"Target Market Breakdown","explanation":"Shows the key market segments and their relative sizes.","data":[{"name":"Segment A","value":40},{"name":"Segment B","value":30},{"name":"Segment C","value":30}]},
+  {"type":"bar","title":"Growth Projection","explanation":"Projected user growth over 3 years based on market trends.","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":50000},{"name":"Year 3","value":150000}]}
 ]
 ---END_CHARTS---
 
 CHART RULES:
 - Generate 2-3 relevant charts
 - Chart types: "pie" or "bar"
+- Each chart MUST include an "explanation" field with a 1-2 sentence insight
 - Data should be realistic and relevant to the pitch
 - Keep data labels short (max 3 words)
 - Output valid JSON only between the delimiters`;
@@ -147,15 +148,15 @@ AFTER the pitch drafts, you MUST also generate a visual data section for charts.
 
 ---CHARTS---
 [
-  {"type":"pie","title":"Market Share Potential","data":[{"name":"Your Solution","value":35},{"name":"Competitor A","value":25},{"name":"Competitor B","value":20},{"name":"Others","value":20}]},
-  {"type":"bar","title":"Projected Growth (Years)","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":45000},{"name":"Year 3","value":120000},{"name":"Year 4","value":300000}]}
+  {"type":"pie","title":"Market Share Potential","explanation":"Illustrates the competitive landscape and your solution's potential market capture.","data":[{"name":"Your Solution","value":35},{"name":"Competitor A","value":25},{"name":"Competitor B","value":20},{"name":"Others","value":20}]},
+  {"type":"bar","title":"Projected Growth (Years)","explanation":"Revenue trajectory showing exponential growth potential over 4 years.","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":45000},{"name":"Year 3","value":120000},{"name":"Year 4","value":300000}]}
 ]
 ---END_CHARTS---
 
 CHART RULES:
 - Generate 2-3 charts that are relevant to the pitch idea
 - Chart types: "pie" or "bar"
-- Each chart needs a "title", "type", and "data" array
+- Each chart MUST include an "explanation" field with a 1-2 sentence insight
 - Data should have realistic, meaningful values related to the pitch
 - Charts should cover: market opportunity, growth projection, user demographics, impact metrics, or revenue model
 - Keep data labels short (max 3 words)
@@ -264,7 +265,7 @@ Analyze the idea and generate 3-4 relevant charts. Include a brief 1-2 sentence 
 
 ---CHARTS---
 [
-  {"type":"${visualizeType || "bar"}","title":"Chart Title","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]}
+  {"type":"${visualizeType || "bar"}","title":"Chart Title","explanation":"A 1-2 sentence insight explaining what this chart reveals and why it matters for the pitch.","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]}
 ]
 ---END_CHARTS---
 
@@ -273,6 +274,7 @@ ${chartTypeInstruction}
 CHART RULES:
 - Generate 3-4 charts covering: market size, growth projection, user demographics, competitive landscape, revenue breakdown, impact metrics
 - ALL charts MUST be type "${visualizeType || "bar"}" only
+- Each chart MUST include an "explanation" field: a 1-2 sentence insight about what the data shows and its significance for the pitch
 - Use realistic, meaningful values relevant to the idea
 - Keep data labels short (max 3 words)
 - Output valid JSON only between the delimiters
