@@ -677,9 +677,6 @@ const ChatMain = ({
               </div>
             </div>
           </div>
-          <p className="text-center text-[hsl(220,10%,60%)] text-[11px] mt-2">
-            Press Enter to send, Shift + Enter for new line
-          </p>
         </div>
       </div>
     </div>
