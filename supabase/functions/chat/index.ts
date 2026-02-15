@@ -24,21 +24,48 @@ Your responses should be:
     if (pitchMode) {
       systemPrompt += `
 
-PITCH MODE IS ACTIVE. When the user shares an idea, generate FOUR structured pitch drafts formatted as markdown sections:
+PITCH MODE IS ACTIVE. When the user shares an idea, generate EXACTLY 4 separate pitch drafts. Each draft should take a DIFFERENT angle or approach to pitching the same idea.
 
-## 1. Problem
-Clearly define the problem that exists. Who is affected? Why does it matter? Use data or relatable scenarios.
+Use this EXACT format with delimiters:
 
-## 2. Solution
-Describe the proposed solution. How does it work? What makes it unique or innovative?
+---DRAFT_1---
+## Problem
+Clearly define the problem. Who is affected? Why does it matter?
 
-## 3. Users & Impact
-Identify the target users/beneficiaries. What measurable impact will this have? Include potential scale.
+## Solution
+Describe the proposed solution. How does it work? What makes it unique?
 
-## 4. Feasibility
-Assess technical feasibility, required resources, timeline, and potential challenges. Include next steps.
+## Users & Impact
+Identify target users. What measurable impact will this have?
 
-Make each section detailed (3-5 sentences minimum). Use bullet points where helpful. Be compelling and professional.`;
+## Feasibility
+Assess technical feasibility, resources, timeline, and challenges.
+
+---DRAFT_2---
+## Problem
+(Different angle/framing of the problem)
+
+## Solution
+(Different emphasis or approach)
+
+## Users & Impact
+(Different target audience or impact metrics)
+
+## Feasibility
+(Different implementation strategy)
+
+---DRAFT_3---
+(Third unique angle)
+
+---DRAFT_4---
+(Fourth unique angle)
+
+IMPORTANT RULES:
+- Each draft MUST start with ---DRAFT_N--- delimiter
+- Each draft should be a COMPLETE pitch with all 4 sections
+- Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, technical, storytelling
+- Make each section 3-5 sentences minimum with bullet points where helpful
+- Be compelling and professional in all drafts`;
     }
 
     if (webSearch) {
