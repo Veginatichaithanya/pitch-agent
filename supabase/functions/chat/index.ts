@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, pitchLength, webSearch } = await req.json();
+    const { messages, pitchMode, pitchLength, presentationMode, webSearch } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -21,7 +21,54 @@ Your responses should be:
 - Encouraging and constructive
 - Focused on making ideas more compelling and presentable`;
 
-    if (pitchMode) {
+    if (pitchMode && presentationMode) {
+      systemPrompt += `
+
+PRESENTATION MODE IS ACTIVE. When the user shares an idea, generate EXACTLY 5 slides for a pitch deck presentation.
+
+Use this EXACT format with delimiters:
+
+---SLIDE_1---
+## [Idea Name]
+- One-line tagline or hook
+- The big vision in one bullet
+
+---SLIDE_2---
+## Problem
+- Pain point 1
+- Pain point 2
+- Pain point 3
+- Who suffers most
+
+---SLIDE_3---
+## Solution
+- What you're building (one line)
+- Key feature 1
+- Key feature 2
+- What makes it unique
+
+---SLIDE_4---
+## Users & Impact
+- Target audience
+- Market size or reach
+- Expected outcome 1
+- Expected outcome 2
+
+---SLIDE_5---
+## Conclusion
+- Why now?
+- Call to action
+- One memorable closing line
+
+STRICT RULES:
+- Each slide MUST start with ---SLIDE_N--- delimiter
+- Use ONLY short bullet points (max 8 words per bullet)
+- NO paragraphs, NO explanations, NO filler text
+- Maximum 5 bullets per slide
+- Keep it punchy and presentation-ready
+- NEVER mention: AI models, LLMs, APIs, API keys, backend, frontend, architecture, databases, security, tech stack, deployment, servers, authentication
+- Focus ONLY on the PITCH CONTENT`;
+    } else if (pitchMode) {
       const isShort = pitchLength !== "long";
       const lengthGuide = isShort
         ? "Keep each section to 2-3 concise sentences. Be punchy, direct, and impactful. Total pitch should fit on one slide."
