@@ -3,7 +3,7 @@ import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const PROCESS_DOC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-document`;
@@ -93,7 +93,7 @@ const CHART_COLORS = [
 ];
 
 interface ChartData {
-  type: "pie" | "bar";
+  type: "pie" | "bar" | "radar";
   title: string;
   data: { name: string; value: number }[];
 }
@@ -143,6 +143,7 @@ const ChatMain = ({
   const [webSearch, setWebSearch] = useState(false);
   const [mindMapMode, setMindMapMode] = useState(false);
   const [visualizeMode, setVisualizeMode] = useState(false);
+  const [visualizeType, setVisualizeType] = useState<"bar" | "pie" | "radar">("bar");
   const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
   const [fullscreenSlide, setFullscreenSlide] = useState<{ msgId: string; slides: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -367,7 +368,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode, visualizeType }),
       });
 
       if (!resp.ok) {
@@ -554,6 +555,16 @@ const ChatMain = ({
                                         <Tooltip />
                                         <Legend wrapperStyle={{ fontSize: "11px" }} />
                                       </PieChart>
+                                    </ResponsiveContainer>
+                                  ) : chart.type === "radar" ? (
+                                    <ResponsiveContainer width="100%" height={250}>
+                                      <RadarChart data={chart.data} cx="50%" cy="50%" outerRadius="70%">
+                                        <PolarGrid stroke="hsl(220,15%,85%)" />
+                                        <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
+                                        <PolarRadiusAxis tick={{ fontSize: 10 }} />
+                                        <Radar dataKey="value" stroke={CHART_COLORS[0]} fill={CHART_COLORS[0]} fillOpacity={0.3} strokeWidth={2} />
+                                        <Tooltip />
+                                      </RadarChart>
                                     </ResponsiveContainer>
                                   ) : (
                                     <ResponsiveContainer width="100%" height={220}>
@@ -958,6 +969,41 @@ const ChatMain = ({
                     </button>
                   </>
                 )}
+              </div>
+            )}
+            {/* Visualize sub-options row */}
+            {visualizeMode && (
+              <div className="flex items-center gap-1.5 px-4 pb-3 flex-wrap">
+                <button
+                  onClick={() => setVisualizeType("bar")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    visualizeType === "bar"
+                      ? "bg-[hsl(30,80%,50%)] text-white shadow-sm"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  📊 Bar Graph
+                </button>
+                <button
+                  onClick={() => setVisualizeType("pie")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    visualizeType === "pie"
+                      ? "bg-[hsl(30,80%,50%)] text-white shadow-sm"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  🥧 Pie Chart
+                </button>
+                <button
+                  onClick={() => setVisualizeType("radar")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    visualizeType === "radar"
+                      ? "bg-[hsl(30,80%,50%)] text-white shadow-sm"
+                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                  }`}
+                >
+                  🕸️ Radar Chart
+                </button>
               </div>
             )}
           </div>

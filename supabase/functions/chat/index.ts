@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode } = await req.json();
+    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode, visualizeType } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -246,22 +246,33 @@ STRICT RULES:
     }
 
     if (visualizeMode) {
+      const chartType = (visualizeType || "bar").toUpperCase();
+      let chartTypeInstruction = "";
+      if (chartType === "BAR") {
+        chartTypeInstruction = `Generate ONLY "bar" type charts. Bar charts are best for comparing quantities across categories, showing growth over time, or ranking items.`;
+      } else if (chartType === "PIE") {
+        chartTypeInstruction = `Generate ONLY "pie" type charts. Pie charts are best for showing proportions, market share, budget allocation, or percentage breakdowns.`;
+      } else if (chartType === "RADAR") {
+        chartTypeInstruction = `Generate ONLY "radar" type charts. Radar charts are best for comparing multiple attributes, scoring criteria, competitive analysis, or skill assessments. Each data point should have a "name" (attribute) and "value" (score 0-100).`;
+      }
+
       systemPrompt += `
 
-VISUALIZE MODE IS ACTIVE. You MUST generate visual chart data for the user's idea or topic.
+VISUALIZE MODE IS ACTIVE (${chartType} CHART). You MUST generate visual chart data for the user's idea or topic.
 
 Analyze the idea and generate 3-4 relevant charts. Include a brief 1-2 sentence intro, then output charts in this EXACT format:
 
 ---CHARTS---
 [
-  {"type":"pie","title":"Chart Title","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]},
-  {"type":"bar","title":"Chart Title","data":[{"name":"Label","value":100},{"name":"Label 2","value":200}]}
+  {"type":"${visualizeType || "bar"}","title":"Chart Title","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]}
 ]
 ---END_CHARTS---
 
+${chartTypeInstruction}
+
 CHART RULES:
 - Generate 3-4 charts covering: market size, growth projection, user demographics, competitive landscape, revenue breakdown, impact metrics
-- Chart types: "pie" or "bar"
+- ALL charts MUST be type "${visualizeType || "bar"}" only
 - Use realistic, meaningful values relevant to the idea
 - Keep data labels short (max 3 words)
 - Output valid JSON only between the delimiters
