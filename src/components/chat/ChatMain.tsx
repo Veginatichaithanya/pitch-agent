@@ -718,7 +718,7 @@ const ChatMain = ({
               rows={1}
               className="w-full resize-none px-4 pt-4 pb-2 text-sm text-[hsl(220,15%,20%)] placeholder:text-[hsl(220,10%,60%)] bg-transparent focus:outline-none"
             />
-            <div className="flex items-center justify-between px-3 pb-3">
+            <div className="flex items-center justify-between px-4 pb-3 gap-2 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setPitchMode(!pitchMode)}
