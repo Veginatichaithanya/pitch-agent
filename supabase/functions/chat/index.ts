@@ -67,7 +67,23 @@ STRICT RULES:
 - Maximum 5 bullets per slide
 - Keep it punchy and presentation-ready
 - NEVER mention: AI models, LLMs, APIs, API keys, backend, frontend, architecture, databases, security, tech stack, deployment, servers, authentication
-- Focus ONLY on the PITCH CONTENT`;
+- Focus ONLY on the PITCH CONTENT
+
+AFTER the slides, you MUST also generate a visual data section for charts. Use this EXACT format:
+
+---CHARTS---
+[
+  {"type":"pie","title":"Target Market Breakdown","data":[{"name":"Segment A","value":40},{"name":"Segment B","value":30},{"name":"Segment C","value":30}]},
+  {"type":"bar","title":"Growth Projection","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":50000},{"name":"Year 3","value":150000}]}
+]
+---END_CHARTS---
+
+CHART RULES:
+- Generate 2-3 relevant charts
+- Chart types: "pie" or "bar"
+- Data should be realistic and relevant to the pitch
+- Keep data labels short (max 3 words)
+- Output valid JSON only between the delimiters`;
     } else if (pitchMode) {
       const isShort = pitchLength !== "long";
       const lengthGuide = isShort
@@ -125,7 +141,25 @@ IMPORTANT RULES:
 - Each draft MUST start with ---DRAFT_N--- delimiter
 - Each draft should be a COMPLETE pitch with all 4 sections
 - Each draft should have a DIFFERENT tone/angle: e.g. investor-focused, user-centric, emotional storytelling, data-driven
-- Be compelling, professional, and FREE of any technical/system language`;
+- Be compelling, professional, and FREE of any technical/system language
+
+AFTER the pitch drafts, you MUST also generate a visual data section for charts. Use this EXACT format:
+
+---CHARTS---
+[
+  {"type":"pie","title":"Market Share Potential","data":[{"name":"Your Solution","value":35},{"name":"Competitor A","value":25},{"name":"Competitor B","value":20},{"name":"Others","value":20}]},
+  {"type":"bar","title":"Projected Growth (Years)","data":[{"name":"Year 1","value":10000},{"name":"Year 2","value":45000},{"name":"Year 3","value":120000},{"name":"Year 4","value":300000}]}
+]
+---END_CHARTS---
+
+CHART RULES:
+- Generate 2-3 charts that are relevant to the pitch idea
+- Chart types: "pie" or "bar"
+- Each chart needs a "title", "type", and "data" array
+- Data should have realistic, meaningful values related to the pitch
+- Charts should cover: market opportunity, growth projection, user demographics, impact metrics, or revenue model
+- Keep data labels short (max 3 words)
+- Output valid JSON only between the delimiters`;
     }
 
     if (judgeMode) {

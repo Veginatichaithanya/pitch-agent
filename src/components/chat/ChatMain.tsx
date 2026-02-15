@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel, Maximize2, Minimize2, Network } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation, Gavel, Maximize2, Minimize2, Network, BarChart3 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const PROCESS_DOC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-document`;
@@ -83,6 +84,31 @@ const parseMindMap = (content: string): string | null => {
   const regex = /---MINDMAP---([\s\S]*?)---END_MINDMAP---/;
   const match = content.match(regex);
   return match ? match[1].trim() : null;
+};
+
+const CHART_COLORS = [
+  "hsl(250, 70%, 60%)", "hsl(170, 60%, 42%)", "hsl(30, 80%, 50%)",
+  "hsl(350, 65%, 50%)", "hsl(210, 70%, 55%)", "hsl(45, 75%, 50%)",
+  "hsl(280, 60%, 55%)", "hsl(140, 50%, 45%)",
+];
+
+interface ChartData {
+  type: "pie" | "bar";
+  title: string;
+  data: { name: string; value: number }[];
+}
+
+const parseCharts = (content: string): { cleanContent: string; charts: ChartData[] } => {
+  const regex = /---CHARTS---\s*([\s\S]*?)\s*---END_CHARTS---/;
+  const match = content.match(regex);
+  if (!match) return { cleanContent: content, charts: [] };
+  const cleanContent = content.replace(regex, "").trim();
+  try {
+    const charts = JSON.parse(match[1].trim()) as ChartData[];
+    return { cleanContent, charts };
+  } catch {
+    return { cleanContent, charts: [] };
+  }
 };
 
 const getFavicon = (url: string) => {
@@ -498,12 +524,56 @@ const ChatMain = ({
                   >
                     {msg.role === "assistant" ? (
                       (() => {
-                        const { cleanContent, sources } = parseSourcesFromContent(msg.content);
+                        const { cleanContent: contentAfterSources, sources } = parseSourcesFromContent(msg.content);
+                        const { cleanContent, charts } = parseCharts(contentAfterSources);
                         const mindMap = parseMindMap(cleanContent);
                         const drafts = parseDrafts(cleanContent);
                         const slides = parseSlides(cleanContent);
                         const currentDraftIdx = draftIndices[msg.id] || 0;
                         const currentSlideIdx = slideIndices[msg.id] || 0;
+
+                        const renderCharts = (chartsData: ChartData[]) => chartsData.length > 0 && (
+                          <div className="mt-4 pt-3 border-t border-[hsl(220,15%,90%)]">
+                            <div className="flex items-center gap-2 mb-3">
+                              <BarChart3 className="w-4 h-4 text-[hsl(250,70%,60%)]" />
+                              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(220,10%,45%)]">Visual Analytics</span>
+                            </div>
+                            <div className="grid gap-4">
+                              {chartsData.map((chart, ci) => (
+                                <div key={ci} className="bg-[hsl(220,20%,97%)] border border-[hsl(220,15%,90%)] rounded-xl p-4">
+                                  <h4 className="text-xs font-semibold text-[hsl(220,15%,25%)] mb-3 text-center">{chart.title}</h4>
+                                  {chart.type === "pie" ? (
+                                    <ResponsiveContainer width="100%" height={220}>
+                                      <PieChart>
+                                        <Pie data={chart.data} cx="50%" cy="50%" outerRadius={80} innerRadius={40} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
+                                          {chart.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                          ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend wrapperStyle={{ fontSize: "11px" }} />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                  ) : (
+                                    <ResponsiveContainer width="100%" height={220}>
+                                      <BarChart data={chart.data}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,88%)" />
+                                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                                        <YAxis tick={{ fontSize: 11 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                                          {chart.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                          ))}
+                                        </Bar>
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
 
                         // Mind map rendering
                         if (mindMap) {
@@ -542,7 +612,6 @@ const ChatMain = ({
 
                           return (
                             <div className="w-full min-w-[340px]">
-                              {/* Slide card - 16:9 aspect ratio */}
                               <div className={`relative bg-gradient-to-br ${slideColor} rounded-2xl shadow-2xl overflow-hidden`} style={{ aspectRatio: "16/9" }}>
                                 <div className="absolute inset-0 bg-black/5" />
                                 <div className="relative h-full flex flex-col p-8">
@@ -567,7 +636,6 @@ const ChatMain = ({
                                   </div>
                                 </div>
                               </div>
-                              {/* Slide navigation */}
                               <div className="flex items-center justify-center gap-3 mt-4">
                                 <button
                                   onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: Math.max(0, currentSlideIdx - 1) }))}
@@ -593,6 +661,7 @@ const ChatMain = ({
                                   <ChevronRight className="w-4 h-4 text-[hsl(220,10%,30%)]" />
                                 </button>
                               </div>
+                              {renderCharts(charts)}
                             </div>
                           );
                         }
@@ -652,6 +721,7 @@ const ChatMain = ({
                                 </div>
                               </div>
                             )}
+                            {renderCharts(charts)}
                           </>
                         );
                       })()
