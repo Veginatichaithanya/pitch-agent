@@ -481,9 +481,14 @@ const ChatMain = ({
                                 >
                                   <ChevronLeft className="w-4 h-4 text-[hsl(220,10%,30%)]" />
                                 </button>
-                                <span className="text-sm font-semibold text-[hsl(220,15%,25%)] min-w-[80px] text-center">
-                                  Draft {currentDraftIdx + 1}
-                                </span>
+                                <div className="text-center min-w-[120px]">
+                                  <span className="text-sm font-semibold text-[hsl(220,15%,25%)] block leading-tight">
+                                    Draft {currentDraftIdx + 1}
+                                  </span>
+                                  <span className="text-[10px] text-[hsl(250,60%,55%)] font-medium">
+                                    {["Investor Focus", "Storytelling", "Data-Driven", "User-Centric"][currentDraftIdx] || `Angle ${currentDraftIdx + 1}`}
+                                  </span>
+                                </div>
                                 <button
                                   onClick={() => setDraftIndices((prev) => ({ ...prev, [msg.id]: Math.min(drafts.length - 1, currentDraftIdx + 1) }))}
                                   disabled={currentDraftIdx === drafts.length - 1}
