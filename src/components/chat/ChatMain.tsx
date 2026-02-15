@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -58,6 +58,12 @@ const parseSourcesFromContent = (content: string): { cleanContent: string; sourc
   return { cleanContent, sources };
 };
 
+const parseDrafts = (content: string): string[] => {
+  const draftRegex = /---DRAFT_\d+---/g;
+  const parts = content.split(draftRegex).filter((p) => p.trim());
+  return parts.length > 1 ? parts : [];
+};
+
 const getFavicon = (url: string) => {
   try {
     const domain = new URL(url).hostname;
@@ -87,6 +93,7 @@ const ChatMain = ({
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [draftIndices, setDraftIndices] = useState<Record<string, number>>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -458,10 +465,35 @@ const ChatMain = ({
                     {msg.role === "assistant" ? (
                       (() => {
                         const { cleanContent, sources } = parseSourcesFromContent(msg.content);
+                        const drafts = parseDrafts(cleanContent);
+                        const currentDraftIdx = draftIndices[msg.id] || 0;
+                        const displayContent = drafts.length > 0 ? drafts[currentDraftIdx] : cleanContent;
+
                         return (
                           <>
+                            {drafts.length > 1 && (
+                              <div className="flex items-center justify-center gap-3 mb-3 pb-2 border-b border-[hsl(220,15%,90%)]">
+                                <button
+                                  onClick={() => setDraftIndices((prev) => ({ ...prev, [msg.id]: Math.max(0, currentDraftIdx - 1) }))}
+                                  disabled={currentDraftIdx === 0}
+                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <ChevronLeft className="w-4 h-4 text-[hsl(220,10%,30%)]" />
+                                </button>
+                                <span className="text-sm font-semibold text-[hsl(220,15%,25%)] min-w-[80px] text-center">
+                                  Draft {currentDraftIdx + 1}
+                                </span>
+                                <button
+                                  onClick={() => setDraftIndices((prev) => ({ ...prev, [msg.id]: Math.min(drafts.length - 1, currentDraftIdx + 1) }))}
+                                  disabled={currentDraftIdx === drafts.length - 1}
+                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <ChevronRight className="w-4 h-4 text-[hsl(220,10%,30%)]" />
+                                </button>
+                              </div>
+                            )}
                             <div className="prose prose-sm prose-slate max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5">
-                              <ReactMarkdown>{cleanContent}</ReactMarkdown>
+                              <ReactMarkdown>{displayContent}</ReactMarkdown>
                             </div>
                             {sources.length > 0 && (
                               <div className="mt-3 pt-3 border-t border-[hsl(220,15%,90%)]">
