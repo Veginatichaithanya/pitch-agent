@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify } from "lucide-react";
+import { Send, Mic, MicOff, Paperclip, FileText, Globe, Sparkles, PanelLeftClose, PanelLeftOpen, X, File, ExternalLink, ChevronLeft, ChevronRight, AlignLeft, AlignJustify, Presentation } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -64,6 +64,21 @@ const parseDrafts = (content: string): string[] => {
   return parts.length > 1 ? parts : [];
 };
 
+const SLIDE_LABELS = ["Title", "Problem", "Solution", "Users & Impact", "Conclusion"];
+const SLIDE_COLORS = [
+  "from-[hsl(250,70%,60%)] to-[hsl(280,70%,55%)]",
+  "from-[hsl(0,65%,55%)] to-[hsl(20,70%,50%)]",
+  "from-[hsl(160,60%,42%)] to-[hsl(180,60%,40%)]",
+  "from-[hsl(210,70%,55%)] to-[hsl(230,65%,50%)]",
+  "from-[hsl(40,75%,50%)] to-[hsl(30,80%,45%)]",
+];
+
+const parseSlides = (content: string): string[] => {
+  const slideRegex = /---SLIDE_\d+---/g;
+  const parts = content.split(slideRegex).filter((p) => p.trim());
+  return parts.length > 1 ? parts : [];
+};
+
 const getFavicon = (url: string) => {
   try {
     const domain = new URL(url).hostname;
@@ -90,7 +105,9 @@ const ChatMain = ({
   const [input, setInput] = useState("");
   const [pitchMode, setPitchMode] = useState(false);
   const [pitchLength, setPitchLength] = useState<"short" | "long">("short");
+  const [presentationMode, setPresentationMode] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
+  const [slideIndices, setSlideIndices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -313,7 +330,7 @@ const ChatMain = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, webSearch }),
+        body: JSON.stringify({ messages: aiMessages, pitchMode, pitchLength, presentationMode, webSearch }),
       });
 
       if (!resp.ok) {
@@ -467,7 +484,60 @@ const ChatMain = ({
                       (() => {
                         const { cleanContent, sources } = parseSourcesFromContent(msg.content);
                         const drafts = parseDrafts(cleanContent);
+                        const slides = parseSlides(cleanContent);
                         const currentDraftIdx = draftIndices[msg.id] || 0;
+                        const currentSlideIdx = slideIndices[msg.id] || 0;
+
+                        // Slide deck rendering
+                        if (slides.length > 1) {
+                          const slideContent = slides[currentSlideIdx] || "";
+                          const slideLabel = SLIDE_LABELS[currentSlideIdx] || `Slide ${currentSlideIdx + 1}`;
+                          const slideColor = SLIDE_COLORS[currentSlideIdx] || SLIDE_COLORS[0];
+
+                          return (
+                            <div className="w-full">
+                              {/* Slide card */}
+                              <div className={`relative bg-gradient-to-br ${slideColor} rounded-xl p-6 min-h-[220px] text-white shadow-lg`}>
+                                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-0.5 text-[10px] font-semibold">
+                                  {currentSlideIdx + 1} / {slides.length}
+                                </div>
+                                <div className="mb-3">
+                                  <span className="text-[11px] uppercase tracking-wider font-semibold opacity-80">{slideLabel}</span>
+                                </div>
+                                <div className="prose prose-sm prose-invert max-w-none [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5 [&_li]:text-sm">
+                                  <ReactMarkdown>{slideContent}</ReactMarkdown>
+                                </div>
+                              </div>
+                              {/* Slide navigation dots + arrows */}
+                              <div className="flex items-center justify-center gap-3 mt-3">
+                                <button
+                                  onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: Math.max(0, currentSlideIdx - 1) }))}
+                                  disabled={currentSlideIdx === 0}
+                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <ChevronLeft className="w-4 h-4 text-[hsl(220,10%,30%)]" />
+                                </button>
+                                <div className="flex gap-1.5">
+                                  {slides.map((_, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: i }))}
+                                      className={`w-2 h-2 rounded-full transition-all ${i === currentSlideIdx ? "bg-[hsl(250,70%,60%)] scale-125" : "bg-[hsl(220,15%,80%)] hover:bg-[hsl(220,15%,65%)]"}`}
+                                    />
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => setSlideIndices((prev) => ({ ...prev, [msg.id]: Math.min(slides.length - 1, currentSlideIdx + 1) }))}
+                                  disabled={currentSlideIdx === slides.length - 1}
+                                  className="w-8 h-8 rounded-lg border border-[hsl(220,15%,88%)] flex items-center justify-center hover:bg-[hsl(220,15%,94%)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <ChevronRight className="w-4 h-4 text-[hsl(220,10%,30%)]" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         const displayContent = drafts.length > 0 ? drafts[currentDraftIdx] : cleanContent;
 
                         return (
@@ -620,6 +690,22 @@ const ChatMain = ({
                   Web Search
                 </button>
                 {pitchMode && (
+                  <>
+                    <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+                    <button
+                      onClick={() => setPresentationMode(!presentationMode)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        presentationMode
+                          ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
+                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                      }`}
+                    >
+                      <Presentation className="w-3.5 h-3.5" />
+                      Slides
+                    </button>
+                  </>
+                )}
+                {pitchMode && !presentationMode && (
                   <>
                     <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
                     <button
