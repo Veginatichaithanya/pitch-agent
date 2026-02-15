@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode } = await req.json();
+    const { messages, pitchMode, pitchLength, presentationMode, judgeMode, judgeType, webSearch, mindMapMode, visualizeMode } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -243,6 +243,29 @@ STRICT RULES:
 - You may add sub-branches under each point if relevant
 - ALWAYS wrap output between ---MINDMAP--- and ---END_MINDMAP--- delimiters
 - Output ONLY the mind map content, nothing else`;
+    }
+
+    if (visualizeMode) {
+      systemPrompt += `
+
+VISUALIZE MODE IS ACTIVE. You MUST generate visual chart data for the user's idea or topic.
+
+Analyze the idea and generate 3-4 relevant charts. Include a brief 1-2 sentence intro, then output charts in this EXACT format:
+
+---CHARTS---
+[
+  {"type":"pie","title":"Chart Title","data":[{"name":"Label","value":40},{"name":"Label 2","value":60}]},
+  {"type":"bar","title":"Chart Title","data":[{"name":"Label","value":100},{"name":"Label 2","value":200}]}
+]
+---END_CHARTS---
+
+CHART RULES:
+- Generate 3-4 charts covering: market size, growth projection, user demographics, competitive landscape, revenue breakdown, impact metrics
+- Chart types: "pie" or "bar"
+- Use realistic, meaningful values relevant to the idea
+- Keep data labels short (max 3 words)
+- Output valid JSON only between the delimiters
+- NEVER mention: AI models, APIs, backend, frontend, architecture, databases, tech stack`;
     }
 
     if (webSearch) {
