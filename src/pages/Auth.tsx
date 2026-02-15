@@ -22,14 +22,35 @@ const Auth = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) {
-      console.error("Google sign-in error:", error.message);
+    const isCustomDomain =
+      !window.location.hostname.includes("lovable.app") &&
+      !window.location.hostname.includes("lovableproject.com");
+
+    if (isCustomDomain) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/chat`,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        console.error("Google sign-in error:", error.message);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/chat`,
+        },
+      });
+      if (error) {
+        console.error("Google sign-in error:", error.message);
+      }
     }
   };
 
