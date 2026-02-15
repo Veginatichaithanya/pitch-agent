@@ -44,7 +44,23 @@ Make each section detailed (3-5 sentences minimum). Use bullet points where help
     if (webSearch) {
       systemPrompt += `
 
-The user has enabled Web Search context. When relevant, reference current trends, market data, or real-world examples to strengthen the pitch or response.`;
+WEB SEARCH MODE IS ACTIVE. You MUST act as a web-aware research assistant. For every response:
+
+1. Provide a thorough, well-researched answer grounded in real-world information, current trends, data, and examples.
+2. Reference specific companies, products, statistics, reports, and news when relevant.
+3. At the VERY END of your response, add a "Sources" section in EXACTLY this format:
+
+---SOURCES---
+[Title of source 1](https://actual-real-url-1.com)
+[Title of source 2](https://actual-real-url-2.com)
+[Title of source 3](https://actual-real-url-3.com)
+---END_SOURCES---
+
+IMPORTANT: 
+- Always include 3-6 real, relevant source URLs that support your response.
+- Use REAL URLs from well-known sites (Wikipedia, Forbes, TechCrunch, Reuters, official docs, etc.)
+- The sources section must be the last thing in your response.
+- Do NOT include the sources section inside markdown headers.`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
