@@ -709,143 +709,18 @@ const ChatMain = ({
       <div className="px-4 pb-4 pt-2">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white border border-[hsl(220,15%,88%)] rounded-2xl shadow-sm overflow-hidden">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Send a message..."
-              rows={1}
-              className="w-full resize-none px-4 pt-4 pb-2 text-sm text-[hsl(220,15%,20%)] placeholder:text-[hsl(220,10%,60%)] bg-transparent focus:outline-none"
-            />
-            <div className="flex items-center justify-between px-4 pb-3 gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setPitchMode(!pitchMode)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    pitchMode
-                      ? "bg-[hsl(250,70%,60%)] text-white shadow-md shadow-primary/20"
-                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  Pitch Mode
-                </button>
-                <button
-                  onClick={() => setWebSearch(!webSearch)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    webSearch
-                      ? "bg-[hsl(250,70%,60%)] text-white shadow-md shadow-primary/20"
-                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                  }`}
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                  Web Search
-                </button>
-                <button
-                  onClick={() => setMindMapMode(!mindMapMode)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    mindMapMode
-                      ? "bg-[hsl(170,60%,42%)] text-white shadow-md shadow-[hsl(170,60%,42%)]/20"
-                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                  }`}
-                >
-                  <Network className="w-3.5 h-3.5" />
-                  Mind Map
-                </button>
-                {pitchMode && (
-                  <>
-                    <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
-                    <button
-                      onClick={() => setPresentationMode(!presentationMode)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        presentationMode
-                          ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      <Presentation className="w-3.5 h-3.5" />
-                      Slides
-                    </button>
-                  </>
-                )}
-                {pitchMode && !presentationMode && (
-                  <>
-                    <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
-                    <button
-                      onClick={() => setPitchLength("short")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        pitchLength === "short"
-                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      <AlignLeft className="w-3.5 h-3.5" />
-                      Short
-                    </button>
-                    <button
-                      onClick={() => setPitchLength("long")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        pitchLength === "long"
-                          ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      <AlignJustify className="w-3.5 h-3.5" />
-                      Long
-                    </button>
-                  </>
-                )}
-                {/* Judge Mode toggle */}
-                <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
-                <button
-                  onClick={() => setJudgeMode(!judgeMode)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    judgeMode
-                      ? "bg-[hsl(350,65%,50%)] text-white shadow-md shadow-[hsl(350,65%,50%)]/20"
-                      : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                  }`}
-                >
-                  <Gavel className="w-3.5 h-3.5" />
-                  Judge
-                </button>
-                {judgeMode && (
-                  <>
-                    <button
-                      onClick={() => setJudgeType("investor")}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                        judgeType === "investor"
-                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      💼 Investor
-                    </button>
-                    <button
-                      onClick={() => setJudgeType("academic")}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                        judgeType === "academic"
-                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      🎓 Academic
-                    </button>
-                    <button
-                      onClick={() => setJudgeType("hackathon")}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                        judgeType === "hackathon"
-                          ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
-                          : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
-                      }`}
-                    >
-                      🏆 Hackathon
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1">
+            {/* Top row: textarea + action buttons */}
+            <div className="flex items-end gap-2 px-4 pt-3 pb-2">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Send a message..."
+                rows={1}
+                className="flex-1 resize-none text-sm text-[hsl(220,15%,20%)] placeholder:text-[hsl(220,10%,60%)] bg-transparent focus:outline-none py-1"
+              />
+              <div className="flex items-center gap-1 shrink-0 pb-0.5">
                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} multiple accept=".txt,.md,.csv,.json,.pdf,.doc,.docx,.pptx,.xlsx" />
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -872,6 +747,131 @@ const ChatMain = ({
                   <Send className="w-4 h-4 text-white" />
                 </button>
               </div>
+            </div>
+            {/* Bottom row: mode toggles */}
+            <div className="flex items-center gap-1.5 px-4 pb-3 flex-wrap">
+              <button
+                onClick={() => setPitchMode(!pitchMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  pitchMode
+                    ? "bg-[hsl(250,70%,60%)] text-white shadow-md shadow-primary/20"
+                    : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Pitch Mode
+              </button>
+              <button
+                onClick={() => setWebSearch(!webSearch)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  webSearch
+                    ? "bg-[hsl(250,70%,60%)] text-white shadow-md shadow-primary/20"
+                    : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Web Search
+              </button>
+              <button
+                onClick={() => setMindMapMode(!mindMapMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  mindMapMode
+                    ? "bg-[hsl(170,60%,42%)] text-white shadow-md shadow-[hsl(170,60%,42%)]/20"
+                    : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                }`}
+              >
+                <Network className="w-3.5 h-3.5" />
+                Mind Map
+              </button>
+              {pitchMode && (
+                <>
+                  <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+                  <button
+                    onClick={() => setPresentationMode(!presentationMode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      presentationMode
+                        ? "bg-[hsl(30,80%,50%)] text-white shadow-md shadow-[hsl(30,80%,50%)]/20"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    <Presentation className="w-3.5 h-3.5" />
+                    Slides
+                  </button>
+                </>
+              )}
+              {pitchMode && !presentationMode && (
+                <>
+                  <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+                  <button
+                    onClick={() => setPitchLength("short")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      pitchLength === "short"
+                        ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    <AlignLeft className="w-3.5 h-3.5" />
+                    Short
+                  </button>
+                  <button
+                    onClick={() => setPitchLength("long")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      pitchLength === "long"
+                        ? "bg-[hsl(160,60%,45%)] text-white shadow-md shadow-[hsl(160,60%,45%)]/20"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    <AlignJustify className="w-3.5 h-3.5" />
+                    Long
+                  </button>
+                </>
+              )}
+              <div className="w-px h-5 bg-[hsl(220,15%,88%)]" />
+              <button
+                onClick={() => setJudgeMode(!judgeMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  judgeMode
+                    ? "bg-[hsl(350,65%,50%)] text-white shadow-md shadow-[hsl(350,65%,50%)]/20"
+                    : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                }`}
+              >
+                <Gavel className="w-3.5 h-3.5" />
+                Judge
+              </button>
+              {judgeMode && (
+                <>
+                  <button
+                    onClick={() => setJudgeType("investor")}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      judgeType === "investor"
+                        ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    💼 Investor
+                  </button>
+                  <button
+                    onClick={() => setJudgeType("academic")}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      judgeType === "academic"
+                        ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    🎓 Academic
+                  </button>
+                  <button
+                    onClick={() => setJudgeType("hackathon")}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      judgeType === "hackathon"
+                        ? "bg-[hsl(350,65%,50%)] text-white shadow-sm"
+                        : "bg-[hsl(220,15%,94%)] text-[hsl(220,10%,40%)] hover:bg-[hsl(220,15%,90%)]"
+                    }`}
+                  >
+                    🏆 Hackathon
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
